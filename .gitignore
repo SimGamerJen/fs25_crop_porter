@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.env
+.venv
+venv/
+env/
+
+# Reports / generated test output
+cropporter_reports/
+CropPorter_*.json
+CropPorter_*.md
+
+# FS25 map/mod archives and extracted test maps
+*.zip
+mods/
+mods_*/
+*_CropPorted_*/
+*_DEV/
+
+# Logs
+*.log
+log.txt
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
