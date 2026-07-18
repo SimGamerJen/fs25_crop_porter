@@ -394,14 +394,11 @@ When reporting issues, please include:
 
 ---
 
-## License
+## Licence and Permissions
 
-Choose a license before publishing.
+Copyright © 2026 SimGamerJen. All rights reserved.
 
-Suggested options:
-
-- MIT License if you want maximum reuse
-- GPL-3.0 if you want derivative tools to remain open-source
+You may download and use this software for personal use. You may not modify, redistribute, re-upload, or publish this software, in whole or in part, or any derivative version without prior written permission from SimGamerJen.
 
 ---
 
