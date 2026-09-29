@@ -997,7 +997,8 @@ def render_apply_markdown_report(report: dict) -> str:
         "",
         f"Version: `{report.get('version', VERSION)}`",
         "",
-        f"Source: `{report.get('source')}`",        f"Target: `{report.get('target')}`",
+        f"Source: `{report.get('source')}`",
+        f"Target: `{report.get('target')}`",
         f"Output: `{report.get('output')}`",
         "",
         "## Summary",
@@ -1996,7 +1997,8 @@ def enforce_source_foliage_layout(
                         break
                     parent = parent.parent
 
-        elif expected.exists():            for duplicate in misplaced:
+        elif expected.exists():
+            for duplicate in misplaced:
                 try:
                     same = files_are_same(expected, duplicate)
                 except OSError:
@@ -2997,6 +2999,7 @@ def validate_output(source: MapProfile, output_profile: MapProfile, crops: list[
     result["warnings"].append("DensityMap_fruits binary compatibility was not independently validated; CropPorter now promotes FoliageMultiLayer channel settings when the source requires more capacity.")
     return result
 
+
 def cmd_scan_source(args: argparse.Namespace) -> int:
     profile = prepare_map_input(Path(args.source))
     try:
@@ -3994,7 +3997,8 @@ def patch_moddesc_store_items(output_root: Path, store_items: list[str]) -> tupl
         if key in existing:
             continue
         elem = ET.Element("storeItem")
-        elem.set("xmlFilename", filename)        store_container.append(elem)
+        elem.set("xmlFilename", filename)
+        store_container.append(elem)
         existing.add(key)
         changed += 1
     if changed:
@@ -4994,6 +4998,7 @@ def cmd_fix_fruit_registry(args: argparse.Namespace) -> int:
         new_elem = ET.Element("fruitType")
         new_elem.set("filename", wanted)
         fruit_types.append(new_elem)
+
         # Remove empty additionalFiles wrappers accidentally created by older alpha builds.
         remove_empty_additional_files(root_elem)
 
@@ -5992,7 +5997,8 @@ def find_i3d_file_id_by_filename(files_container: ET.Element, filename: str) -> 
     for elem in list(files_container):
         if local_name(elem.tag).lower() != "file":
             continue
-        current = get_i3d_file_filename(elem).lower()        if current == wanted:
+        current = get_i3d_file_filename(elem).lower()
+        if current == wanted:
             return get_i3d_file_id(elem)
     return None
 
@@ -6991,6 +6997,7 @@ def copy_package_assets(package_root: Path, output_root: Path, source_prefix: st
         if not src.is_file():
             continue
         rel = src.relative_to(assets_root).as_posix()
+
         # Source map i3d files are packaged only as foliage-layer templates. Never
         # install them into the target map; patch_i3d_foliage_layer_for_crop uses
         # the packaged copy internally to transplant just the required crop layer.
@@ -7990,7 +7997,8 @@ def repack_density_height_png_channels(
     backup = png_path.with_suffix(png_path.suffix + ".cropporter.heightlayout.bak")
     if not backup.exists():
         shutil.copy2(png_path, backup)
-    _write_png_scanlines(png_path, width, height, rows, chunks)    return moved, new_total
+    _write_png_scanlines(png_path, width, height, rows, chunks)
+    return moved, new_total
 
 def prepare_density_height_png_for_layout(
     target_root: Path,
@@ -8989,7 +8997,8 @@ def cmd_export_crop(args: argparse.Namespace) -> int:
                 linked_wanted = {x.upper() for x in probe.get("linkedFillTypes", [])}
                 linked_fill_refs = normalise_filltype_asset_references(source_root, find_fill_type_refs_by_names(source_root, linked_wanted))
                 linked_height_refs = find_height_type_refs_by_names(source_root, linked_wanted)
-                if args.include_vehicles:                    vehicle_assets, vehicle_store_items = collect_plantation_vehicle_dependencies(source_root, probe)
+                if args.include_vehicles:
+                    vehicle_assets, vehicle_store_items = collect_plantation_vehicle_dependencies(source_root, probe)
                     asset_paths.update(vehicle_assets)
 
             # Plantation/linked additions can introduce further local references.
@@ -9988,7 +9997,8 @@ def cmd_apply_packages(args: argparse.Namespace) -> int:
             work_root = None
             raise
         work_root = None
-        multi_report["actions"].append(f"Promoted completed work tree using: {promotion_mode}.")        multi_report["warnings"].extend(promotion_warnings)
+        multi_report["actions"].append(f"Promoted completed work tree using: {promotion_mode}.")
+        multi_report["warnings"].extend(promotion_warnings)
         # Refresh the final report in the promoted output so the promotion method and
         # any Windows filesystem warning are captured in the build audit.
         write_reports(multi_report, output_final, prefix="CropPorter_MultiApply")
