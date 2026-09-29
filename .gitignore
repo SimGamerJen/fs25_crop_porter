@@ -13,8 +13,13 @@ env/
 cropporter_reports/
 CropPorter_*.json
 CropPorter_*.md
+.cropporter_work_*/
+*_FAILED/
 
-# FS25 map/mod archives and extracted test maps
+# CropPorter / map backups
+*.bak
+
+# FS25 map/mod archives, CropPorter packages and extracted test maps
 *.zip
 mods/
 mods_*/
