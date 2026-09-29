@@ -1,409 +1,249 @@
 # FS25 CropPorter
 
-**FS25 CropPorter** is an experimental Python utility for Farming Simulator 25 map modders and advanced users. It helps analyse and port **standard field-style custom crops** from one map into another by copying crop assets and patching the relevant XML/i3d references.
+**FS25 CropPorter** is a Python reference/prototype for porting Farming Simulator 25 custom crops between map mods.
 
-This is an **alpha tool**. It is not a one-click universal crop converter.
+The project is deliberately conservative: it inspects the source and target map structures, builds a compatibility plan, copies the crop-related assets it can resolve, patches the target, and validates the result as far as possible before FS25 is launched.
 
-Current focus:
+> **Alpha software.** CropPorter is not yet proven against every FS25 map architecture. Always work from backups and test generated maps in disposable saves first.
 
-- Field crops
-- Cereal-style crops
-- Bean/pulse-style crops
-- Standard `fruitType` / `fillType` / foliage-based crops
+## Project direction
 
-Tested examples:
+This repository remains the **Python reference implementation**.
 
-- `BLACKBEAN`
-- `PINTOBEAN`
+Current development baseline:
 
-Tested target workflows:
+~~~text
+Version:      0.3-alpha
+Build marker: supplemental-height-registry-pipeline-v17
+Source SHA256: fe3231006edc7fc8c52241206f588a5b88db4d80ef25758f1830f5038e4a4af3
+Script:       fs_25_crop_porter_v_0_3.py
+~~~
 
-- Pirambeiras → Estancia Lapacho
-- Pirambeiras / 3 Marias → BR163 Brazil
+A separate Windows desktop application is planned in **C# / .NET / WPF**. The Python implementation is being retained as the known-good behavioural reference while that application is built.
 
----
+The historical v0.1 script remains in this repository for reference.
 
-## Status
+## Current capabilities
 
-Current public release:
+The v0.3 Python baseline can:
 
-```text
-FS25 CropPorter v0.1.0-alpha
-```
+- scan and probe source maps;
+- preflight source-to-target crop ports;
+- export reusable .cropporter.zip crop packages;
+- inspect packages and package libraries;
+- apply one package or a batch of packages to a pristine target map;
+- produce a complete release ZIP;
+- copy crop foliage XML, I3D, shapes, textures and resolved local runtime dependencies;
+- handle shared/sibling foliage families such as normal/winter barley and wheat;
+- patch fruit types, fill types, height types, categories, converters and l10n;
+- support both separate fruit registries and inline <fruitTypes> blocks in the main map XML;
+- create supplemental local fill-type/height-type registries where the target requires them;
+- preserve existing I3D <File> entries and append replacement density-map references safely;
+- expand densityMap_fruits type-index capacity when required;
+- convert GDM/GRLE density data through the GIANTS GRLE converter where required;
+- synchronise densityMapHeightTypes with terrainDetailHeight;
+- repack terrain-detail-height type/height bits when the type-index width expands;
+- explicitly migrate an established save's densityMap_height.gdm when the converted map layout requires it;
+- create backups and JSON/Markdown diagnostic reports;
+- run internal regression/self-tests.
 
-This release is intended for public testing by users who are comfortable working with extracted FS25 map folders, XML files, map i3d files, and disposable test saves.
+Experimental plantation/vine inspection and apply commands are still present, but the current validated v0.3 workflow is focused on standard field-style crops.
 
----
+## Portability rule
 
-## What it does
+CropPorter must solve **map structures**, not map names.
 
-CropPorter can:
+The engine should not contain target-specific branches such as:
 
-- Scan a source map for detected crops
-- Probe a selected crop and its dependencies
-- Run a preflight report before applying changes
-- Copy detected crop assets
-- Copy `.i3d` and `.i3d.shapes` foliage dependencies
-- Insert `fruitType` registry entries
-- Insert `fillType` entries
-- Insert `densityMapHeightType` entries where detected
-- Patch `fillTypeCategory` entries
-- Patch `fruitTypeCategory` entries
-- Patch l10n entries
-- Patch map `.i3d` foliage layer references
-- Remap conflicting i3d IDs such as `fileId`, `fruitId`, and `foliageId`
-- Patch fruit density channel configuration
-- Generate JSON and Markdown reports
+~~~python
+if map_name == "FS25_HobosHollow":
+    ...
+~~~
 
----
+or assumptions tied to a particular I3D file ID.
 
-## What it does not do
+Instead it detects characteristics such as:
 
-CropPorter v0.1 does **not** currently support:
+- inline vs separate registries;
+- PNG vs GDM/GRLE density references;
+- current fruit-density channel capacity;
+- presence or absence of a local height-type registry;
+- terrain-detail-height bit layout;
+- shared foliage family layouts;
+- local runtime asset dependencies.
 
-- Plantation crops
-- Vine crops
-- Row-placeable crops
-- Coffee rows
-- Grapes/olive-style custom systems
-- Greenhouse-only crops
-- Crops that require custom Lua
-- Production-chain migration
-- Vehicle migration
-- Harvester/tool migration
-- Guaranteed savegame migration
-- Guaranteed compatibility with every map
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-Plantation/vine crop support is being explored separately in an experimental v0.2 development branch and is **not part of this v0.1 alpha release**.
+## Current validation baseline
 
----
+### Source/package baseline
 
-## Important safety warning
+The current 12-package validation set was exported from BallySpring:
 
-This tool modifies map folders and XML/i3d configuration files.
+1. barley (including winter barley family assets)
+2. wheat (including winter wheat family assets)
+3. triticale
+4. rye
+5. clover
+6. fieldgrass
+7. flowering catch crop
+8. green rye
+9. humus active
+10. mustard
+11. silage maize
+12. vetch rye
 
-Always:
+### Target architecture A — Castlereagh
 
-1. Work on a copy of the target map.
-2. Use a fresh output folder.
-3. Test in a disposable savegame first.
-4. Keep the original source and target maps backed up.
-5. Do not run this directly against your only working copy of a map.
-6. Do not test on an important save until the generated map has loaded cleanly in a disposable save.
+Validated behaviours include:
 
-CropPorter is intended for advanced FS25 users and map modders.
+- existing local crop/height registries;
+- shared barley/wheat foliage-family reconciliation;
+- crop asset dependency resolution;
+- fruit-density expansion;
+- terrain-detail-height expansion;
+- fresh-save load/save/reload;
+- explicit established-save height-map migration.
 
----
+The established Castlereagh save used for the final migration test had an all-zero densityMap_height.gdm, so real-world preservation of a pre-existing non-zero loose-material heap remains **not field-tested**. Synthetic non-zero migration tests pass.
+
+### Target architecture B — Hobo's Hollow
+
+Validated behaviours include:
+
+- inline <fruitTypes> registry in map.xml;
+- direct GDM references in the I3D;
+- no original local densityMapHeightTypes registry;
+- creation/activation of a supplemental height registry;
+- append-only I3D file-table handling;
+- terrainDetailHeight expansion from 12 to 14 channels;
+- fresh-save load/save/reload.
+
+Both targets were validated with the same generic crop-porting engine.
 
 ## Requirements
 
-- Windows
-- Python 3.10 or newer recommended
-- Farming Simulator 25 map mods
-- Source and target maps as either:
-  - `.zip` map mods, or
-  - extracted map folders
+- Windows is the primary development/test platform.
+- Python 3.10 or newer is recommended.
+- Farming Simulator 25.
+- Source/target map mods as ZIP files or extracted folders.
+- GIANTS GRLE Converter when a workflow needs to decode/convert GDM/GRLE data.
 
-No third-party Python libraries are currently required for the v0.1 workflow.
+The script currently contains a development-machine default path for the GRLE converter. On another system, pass the correct location explicitly:
 
----
+~~~powershell
+--grle-converter 'C:\Path\To\grleConverter\convert.cmd'
+~~~
 
-## Basic workflow
+No third-party Python packages are required by the current baseline.
 
-The safest workflow is:
+## Quick start
 
-```text
-scan-source
-probe-crop
-preflight
-apply
-patch-density-config
-test in disposable save
-```
+Run the internal checks first:
 
----
+~~~powershell
+py .\fs_25_crop_porter_v_0_3.py selftest
+~~~
 
-## Example: scan a source map
+Scan a source map:
 
-```powershell
-py .\python\Crop_Porter\fs_25_crop_porter_v_0_1.py scan-source `
-  '.\mods\FS25_SourceMap.zip' `
-  --include-basegame
-```
+~~~powershell
+py .\fs_25_crop_porter_v_0_3.py scan-source '.\mods\FS25_SourceMap.zip' --include-basegame
+~~~
 
-This lists detected crops and helps confirm the crop name to use.
+Probe a crop:
 
----
+~~~powershell
+py .\fs_25_crop_porter_v_0_3.py probe-crop '.\mods\FS25_SourceMap.zip' rye
+~~~
 
-## Example: probe a crop
+Export a reusable crop package:
 
-```powershell
-py .\python\Crop_Porter\fs_25_crop_porter_v_0_1.py probe-crop `
-  '.\mods\FS25_SourceMap.zip' `
-  blackbean
-```
+~~~powershell
+py .\fs_25_crop_porter_v_0_3.py export-crop --source '.\mods\FS25_SourceMap.zip' --crop rye --library '.\CropPorterLibrary' --source-name 'Source Map'
+~~~
 
-The probe reports detected dependencies such as:
+Apply a package:
 
-- `fruitType` nodes
-- `fillType` nodes
-- `heightType` nodes
-- referenced assets
-- warnings
+~~~powershell
+py .\fs_25_crop_porter_v_0_3.py apply-package --package '.\CropPorterLibrary\rye_source-map.cropporter.zip' --target '.\mods\FS25_TargetMap.zip' --output '.\mods - TESTING\FS25_TargetMap_Rye'
+~~~
 
----
+For a multi-package build, repeat --package once for each package:
 
-## Example: preflight before applying
+~~~powershell
+py .\fs_25_crop_porter_v_0_3.py apply-packages --package '.\CropPorterLibrary\barley.cropporter.zip' --package '.\CropPorterLibrary\wheat.cropporter.zip' --package '.\CropPorterLibrary\rye.cropporter.zip' --target '.\mods - TESTING\FS25_TargetMap.zip' --output '.\mods - TESTING\FS25_TargetMap_Custom' --zip-output '.\mods - TESTING\FS25_TargetMap_Custom.zip'
+~~~
 
-```powershell
-py .\python\Crop_Porter\fs_25_crop_porter_v_0_1.py preflight `
-  --source '.\mods\FS25_SourceMap.zip' `
-  --target '.\mods\FS25_TargetMap.zip' `
-  --crops blackbean `
-  --output '.\cropporter_reports\source_to_target_blackbean'
-```
+See [docs/COMMANDS.md](docs/COMMANDS.md) for the complete command summary.
 
-This writes:
+## Existing-save migration
 
-```text
-CropPorter_Preflight.json
-CropPorter_Preflight.md
-```
+Normal apply operations do **not** modify savegames.
 
-Review these before applying.
+If an established save was created against an older terrainDetailHeight layout and the converted map increases the type-index width, first inspect the migration:
 
----
+~~~powershell
+py .\fs_25_crop_porter_v_0_3.py migrate-save --savegame 'C:\Path\To\savegame' --map '.\FS25_TargetMap_Custom.zip' --dry-run
+~~~
 
-## Example: apply a crop to a target map
+Only after reviewing the dry-run should the migration be executed without --dry-run.
 
-```powershell
-py .\python\Crop_Porter\fs_25_crop_porter_v_0_1.py apply `
-  --source '.\mods\FS25_SourceMap.zip' `
-  --target '.\mods\FS25_TargetMap.zip' `
-  --crops blackbean `
-  --output '.\mods\FS25_TargetMap_CropPorted_Blackbean_v1'
-```
+The migration creates a timestamped backup and validates the generated GDM with the GIANTS converter before replacement.
 
-The apply process writes:
+## Safety model
 
-```text
-CropPorter_Apply.json
-CropPorter_Apply.md
-```
+Always:
 
----
+1. keep an untouched source map;
+2. keep an untouched pristine target map;
+3. generate into a new output folder;
+4. review CropPorter reports;
+5. ensure only one copy/version of a target map is active in the FS25 mods folder;
+6. test a brand-new disposable save first;
+7. save, quit FS25 completely, restart and reload;
+8. back up established saves before any explicit save migration.
 
-## Patch density channel config
+CropPorter intentionally refuses transformations that violate known safety invariants.
 
-After adding a new fruitType, run:
+## Crop packages and redistribution
 
-```powershell
-py .\python\Crop_Porter\fs_25_crop_porter_v_0_1.py patch-density-config `
-  '.\mods\FS25_TargetMap_CropPorted_Blackbean_v1'
-```
+A .cropporter.zip can contain assets originating from a source map. Package creation does **not** grant redistribution rights.
 
-This updates the target map i3d foliage density channel configuration where needed.
+The package manifest records a redistribution status, but the user remains responsible for ensuring that source-map assets may legally be redistributed.
 
-Important:
+Do not publish third-party map assets or CropPorter packages without appropriate permission.
 
-```text
-This changes the i3d channel config only.
-If the density map binary/image itself needs conversion or expansion, manual work may still be required.
-```
+## Documentation
 
----
-
-## Verify fruit registry
-
-```powershell
-py .\python\Crop_Porter\fs_25_crop_porter_v_0_1.py probe-fruit-registry `
-  '.\mods\FS25_TargetMap_CropPorted_Blackbean_v1'
-```
-
-Look for the imported crop as a direct `fruitType` registry entry.
-
-Example:
-
-```xml
-<fruitType filename="maps/foliage/blackbean/blackbean.xml" />
-```
-
----
-
-## Verify density setup
-
-```powershell
-py .\python\Crop_Porter\fs_25_crop_porter_v_0_1.py probe-density `
-  '.\mods\FS25_TargetMap_CropPorted_Blackbean_v1' `
-  --include-fruits
-```
-
-This reports detected density layer configuration, estimated fruitType capacity, and related warnings.
-
----
-
-## Common warnings
-
-### No growth/calendar entry was matched
-
-The crop may not appear in the seasonal calendar unless a matching growth/calendar entry exists or is added manually.
-
-### No target heightTypes XML file detected
-
-The target map may not use a separate `maps_densityMapHeightTypes.xml`, or it may define height types differently.
-
-### Density map binary/channel capacity was not validated
-
-CropPorter v0.1 does not fully validate or expand binary `.gdm` density maps. Always test in a disposable save.
-
-### Skipped target duplicate node
-
-This usually means the target already had that fillType, heightType, or category entry. This can be normal.
-
----
-
-## Existing saves and map identity
-
-FS25 saves are tied to the map mod identity. If you create a new output folder such as:
-
-```text
-FS25_TargetMap_CropPorted_Blackbean_v1
-```
-
-an existing save made on:
-
-```text
-FS25_TargetMap
-```
-
-may not recognise it as the same map.
-
-Recommended development workflow:
-
-```text
-1. Generate versioned output folders.
-2. Test in disposable saves.
-3. Once happy, copy the final output into a stable DEV folder name.
-```
-
-Example:
-
-```text
-FS25_TargetMap_CropPorted_DEV
-```
-
----
-
-## Known limitations
-
-CropPorter v0.1 is not guaranteed to work with every FS25 map.
-
-Known risk areas:
-
-- Inline map XML registries
-- Non-standard `fruitTypes` layouts
-- Maps that use `additionalFiles` differently
-- Crops with custom scripts
-- Crops with production chains
-- Crops that use placeables rather than field foliage
-- Vine/orchard/plantation systems
-- Missing or incompatible i3d/shapes references
-- Density map capacity issues
-- Savegame compatibility
-
----
-
-## Tested crops
-
-### BLACKBEAN
-
-Confirmed working as a field crop.
-
-Test coverage includes:
-
-- Crop registration
-- PDA/map visibility
-- In-field render
-- Harvest-ready state
-- FillType support
-- Storage/category integration
-
-### PINTOBEAN
-
-Confirmed working as a field crop.
-
-Test coverage includes:
-
-- Crop registration
-- PDA/map visibility
-- In-field render
-- Harvest-ready state
-- FillType support
-- Storage/category integration
-
----
-
-## Not included in v0.1
-
-Coffee / row-planted coffee / plantation support is **not included** in this release.
-
-That work is being developed separately in v0.2 and includes different systems:
-
-- `placeable type="vine"`
-- row planting
-- tree/placeable definitions
-- motion path effects
-- dedicated production chains
-- optional vehicle migration
-
-Do not expect v0.1 to port coffee, grapes, olives, tea, cocoa, orchard systems, or greenhouse-based crops.
-
----
-
-## Suggested test procedure
-
-After generating a ported map:
-
-1. Move the original target map out of the active mods folder.
-2. Leave only the generated ported map active.
-3. Start a new disposable save.
-4. Check the log for missing file errors.
-5. Confirm the crop appears in the map/PDA where expected.
-6. Use Easy Dev Controls or similar tools to set the crop state.
-7. Confirm the crop renders in field.
-8. Confirm seeders/planters support the crop.
-9. Confirm harvest works.
-10. Confirm trailers/silos/sell points accept the fillType.
-
----
+- [Commands](docs/COMMANDS.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Testing](docs/TESTING.md)
+- [Limitations](docs/LIMITATIONS.md)
+- [Changelog](CHANGELOG.md)
+- [v0.3-alpha v17 release notes](RELEASE_NOTES_v0.3-alpha-v17.md)
 
 ## Reporting issues
 
-When reporting issues, please include:
+Useful reports include:
 
-- CropPorter version
-- Source map name
-- Target map name
-- Crop name
-- Command used
-- `CropPorter_Preflight.md`
-- `CropPorter_Apply.md`
-- Relevant FS25 `log.txt` errors/warnings
-- Whether the source/target maps are zipped or extracted folders
-- Whether the test was done in a new disposable save
+- CropPorter version/build marker;
+- exact command;
+- source map and target map;
+- crop/package list;
+- generated CropPorter_Apply*.json/.md or CropPorter_MultiApply.*;
+- save-migration report if applicable;
+- relevant FS25 log.txt;
+- whether the failure occurred on first load or after save/reload.
 
----
-
-## Licence and Permissions
+## Licence and permissions
 
 Copyright © 2026 SimGamerJen. All rights reserved.
 
 You may download and use this software for personal use. You may not modify, redistribute, re-upload, or publish this software, in whole or in part, or any derivative version without prior written permission from SimGamerJen.
 
----
-
 ## Disclaimer
 
 FS25 CropPorter is an unofficial tool. It is not affiliated with GIANTS Software.
 
-Use at your own risk. Always back up your maps and saves.
+Use at your own risk. Always back up maps and saves.

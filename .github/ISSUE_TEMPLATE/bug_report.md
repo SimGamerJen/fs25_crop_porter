@@ -6,85 +6,90 @@ labels: bug
 assignees: ""
 ---
 
-## CropPorter version
+## CropPorter version / build marker
 
 Example:
 
-```text
-0.1.0-alpha
-```
+~~~text
+0.3-alpha
+supplemental-height-registry-pipeline-v17
+~~~
 
-## Source map
+## Operation
 
-Name/version/link if available:
+- [ ] scan/probe/preflight
+- [ ] export-crop
+- [ ] apply-package
+- [ ] apply-packages
+- [ ] migrate-save
+- [ ] plantation/experimental
+- [ ] other
 
-```text
+## Source map / package(s)
 
-```
+Name/version/link if available. For multi-package apply, include the package order.
+
+~~~text
+
+~~~
 
 ## Target map
 
 Name/version/link if available:
 
-```text
+~~~text
 
-```
+~~~
 
-## Crop being ported
+## Exact command
 
-```text
+~~~powershell
 
-```
-
-## Command used
-
-Paste the exact command:
-
-```powershell
-
-```
+~~~
 
 ## What happened?
 
-Describe the problem:
+~~~text
 
-```text
+~~~
 
-```
+## What did you expect?
 
-## What did you expect to happen?
+~~~text
 
-```text
+~~~
 
-```
+## Runtime stage
 
-## Did the generated map load?
+- [ ] Build/static validation
+- [ ] First FS25 load
+- [ ] First save
+- [ ] Restart/reload
+- [ ] Established-save migration
 
-- [ ] Yes
-- [ ] No
+## Test hygiene
 
-## Did you test in a disposable save?
+- [ ] Untouched target used
+- [ ] Fresh output path used
+- [ ] Only one copy/version of the target map active
+- [ ] Disposable fresh save tested first
+- [ ] FS25 fully restarted for reload test
 
-- [ ] Yes
-- [ ] No
+## Attach CropPorter reports
 
-## Attach/paste CropPorter reports
+Attach whichever apply:
 
-Please attach or paste:
+- CropPorter_Preflight.*
+- CropPorter_Apply*.json/.md
+- CropPorter_MultiApply.*
+- CropPorter_SaveMigration_*.json
 
-- `CropPorter_Preflight.md`
-- `CropPorter_Apply.md`
+## FS25 log
 
-## FS25 log errors/warnings
-
-Paste relevant log lines:
-
-```text
-
-```
+Attach the complete relevant log.txt where possible, or paste the relevant section.
 
 ## Additional notes
 
-```text
+~~~text
 
-```
+~~~
