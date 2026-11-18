@@ -236,7 +236,7 @@ Useful reports include:
 - relevant FS25 log.txt;
 - whether the failure occurred on first load or after save/reload.
 
-## Licence and permissions
+## Licence and Permissions
 
 Copyright © 2026 SimGamerJen. All rights reserved.
 
